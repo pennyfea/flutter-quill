@@ -55,45 +55,7 @@ class ImageOptionsMenu extends StatelessWidget {
       child: SimpleDialog(
         title: Text(context.loc.image),
         children: [
-          if (!readOnly)
-            ListTile(
-              title: Text(context.loc.resize),
-              leading: const Icon(Icons.settings_outlined),
-              onTap: () {
-                Navigator.pop(context);
-                showCupertinoModalPopup<void>(
-                  context: context,
-                  builder: (modalContext) {
-                    final screenSize = MediaQuery.sizeOf(modalContext);
-                    return ImageResizer(
-                      onImageResize: (width, height) {
-                        final res = getEmbedNode(
-                          controller,
-                          controller.selection.start,
-                        );
-
-                        final attr = replaceStyleStringWithSize(
-                          getImageStyleString(controller),
-                          width: width,
-                          height: height,
-                        );
-                        controller
-                          ..skipRequestKeyboard = true
-                          ..formatText(
-                            res.offset,
-                            1,
-                            StyleAttribute(attr),
-                          );
-                      },
-                      imageWidth: imageSize.width,
-                      imageHeight: imageSize.height,
-                      maxWidth: screenSize.width,
-                      maxHeight: screenSize.height,
-                    );
-                  },
-                );
-              },
-            ),
+/*
           ListTile(
             leading: const Icon(Icons.copy_all_outlined),
             title: Text(context.loc.copy),
@@ -112,6 +74,7 @@ class ImageOptionsMenu extends StatelessWidget {
               }
             },
           ),
+*/
           if (!readOnly)
             ListTile(
               leading: Icon(
@@ -225,19 +188,6 @@ class ImageOptionsMenu extends StatelessWidget {
               throw StateError(
                   'Image save result is not handled on $defaultTargetPlatform');
             },
-          ),
-          ListTile(
-            leading: const Icon(Icons.zoom_in),
-            title: Text(context.loc.zoom),
-            onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ImageTapWrapper(
-                  imageUrl: imageSource,
-                  config: config,
-                ),
-              ),
-            ),
           ),
         ],
       ),
