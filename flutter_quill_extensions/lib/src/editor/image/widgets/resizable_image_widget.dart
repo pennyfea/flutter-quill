@@ -6,6 +6,7 @@ import '../../../common/utils/element_utils/element_utils.dart';
 import '../config/image_config.dart';
 import '../image_menu.dart';
 import 'image.dart';
+import 'image_selection_manager.dart';
 
 /// A widget that displays an image with resize handles when selected
 class ResizableImageWidget extends StatefulWidget {
@@ -31,12 +32,13 @@ class ResizableImageWidget extends StatefulWidget {
 }
 
 class _ResizableImageWidgetState extends State<ResizableImageWidget> {
-  bool _isSelected = false;
   late ElementSize _currentSize;
   Offset? _dragStartPosition;
   Offset? _lastDragPosition;
   ElementSize? _dragStartSize;
   _ResizeHandle? _activeHandle;
+  late String _imageId;
+  late ImageSelectionManager _selectionManager;
 
   // Configuration for resize handles
  // static const double _handleSize = 16.0; // Increased size for easier dragging
@@ -46,10 +48,48 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
   static const double _handleOpacity = 1.0; // Full opacity for better visibility
   static const double _minSize = 50.0;
 
+  bool get _isSelected => _selectionManager.isSelected(_imageId);
+
   @override
   void initState() {
     super.initState();
     _currentSize = widget.imageSize;
+
+    _selectionManager = ImageSelectionManager();
+    // Create unique ID for this image instance
+    _imageId = '${widget.imageSource}_${widget.embedContext.node.documentOffset}';
+
+    // Listen to selection changes
+    _selectionManager.addListener(_onSelectionChanged);
+    
+    // Listen to controller selection changes to deselect when text is selected
+    widget.embedContext.controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void dispose() {
+    _selectionManager.removeListener(_onSelectionChanged);
+    widget.embedContext.controller.removeListener(_onControllerChanged);
+    super.dispose();
+  }
+
+  void _onSelectionChanged() {
+    setState(() {
+      // Widget will rebuild and check if it's selected
+    });
+  }
+
+  void _onControllerChanged() {
+    // If the text selection changes and this image is selected, deselect it
+    if (_isSelected && widget.embedContext.controller.selection.isValid) {
+      final selection = widget.embedContext.controller.selection;
+      final imageOffset = widget.embedContext.node.documentOffset;
+      
+      // If the text selection doesn't include this image, deselect it
+      if (selection.end < imageOffset || selection.start > imageOffset) {
+        _selectionManager.deselectAll();
+      }
+    }
   }
 
   void _handleTap() {
@@ -59,17 +99,11 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
       return;
     }
 
-    setState(() {
-      _isSelected = true;
-    });
+    _selectionManager.selectImage(_imageId);    
   }
 
   void _handleDeselect() {
-    if (_isSelected) {
-      setState(() {
-        _isSelected = false;
-      });
-    }
+    _selectionManager.deselectAll();    
   }
 
   void _showImageMenu() {
@@ -246,7 +280,7 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
 
   Widget _buildResizeHandle(_ResizeHandle handle, Alignment alignment, MouseCursor cursor) {
     const handleSize = _handleSize;
-    const hitAreaSize = handleSize + 8; // Larger hit area for easier dragging
+    const hitAreaSize = handleSize + 16; // Larger hit area for easier dragging
     const offset = handleSize / 2;
 
     return Positioned(
