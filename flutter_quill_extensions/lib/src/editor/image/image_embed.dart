@@ -5,6 +5,7 @@ import '../../common/utils/element_utils/element_utils.dart';
 import 'config/image_config.dart';
 import 'image_menu.dart';
 import 'widgets/image.dart';
+import 'widgets/resizable_image_widget.dart';
 
 class QuillEditorImageEmbedBuilder extends EmbedBuilder {
   QuillEditorImageEmbedBuilder({
@@ -28,50 +29,27 @@ class QuillEditorImageEmbedBuilder extends EmbedBuilder {
       embedContext.node,
       context,
     );
-
-    final width = imageSize.width;
-    final height = imageSize.height;
-
-    final imageWidget = getImageWidgetByImageSource(
-      context: context,
-      imageSource,
-      imageProviderBuilder: config.imageProviderBuilder,
-      imageErrorWidgetBuilder: config.imageErrorWidgetBuilder,
-      alignment: alignment,
-      height: height,
-      width: width,
+    
+    // Use the new resizable image widget
+    final resizableImageWidget = ResizableImageWidget(
+      embedContext: embedContext,
+      config: config,
+      imageSource: imageSource,
+      imageSize: imageSize,
+      margin: margin,
+       alignment: alignment,
     );
 
-    return GestureDetector(
-      onTap: () {
-        final onImageClicked = config.onImageClicked;
-        if (onImageClicked != null) {
-          onImageClicked(imageSource);
-          return;
+    return Builder(
+      builder: (context) {
+        if (margin != null) {
+          return Padding(
+            padding: EdgeInsets.all(margin),
+            child: resizableImageWidget,
+          );
         }
-        showDialog(
-          context: context,
-          builder: (_) => ImageOptionsMenu(
-            controller: embedContext.controller,
-            config: config,
-            imageSource: imageSource,
-            imageSize: imageSize,
-            readOnly: embedContext.readOnly,
-            imageProvider: imageWidget.image,
-          ),
-        );
+        return resizableImageWidget;
       },
-      child: Builder(
-        builder: (context) {
-          if (margin != null) {
-            return Padding(
-              padding: EdgeInsets.all(margin),
-              child: imageWidget,
-            );
-          }
-          return imageWidget;
-        },
-      ),
     );
   }
 }
